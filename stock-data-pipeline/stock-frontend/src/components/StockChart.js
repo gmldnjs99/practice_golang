@@ -24,7 +24,7 @@ const StockChart = ({ stockData }) => {
   const groupedData = stockData.reduce((acc, data) => {
     if (!acc[data.symbol]) {
       acc[data.symbol] = {
-        label: data.symbol,
+        label: data.name,  // 주식 이름을 label로 설정
         data: [],
         borderColor: getRandomColor(),
         backgroundColor: 'rgba(75,192,192,0.2)',
@@ -33,7 +33,7 @@ const StockChart = ({ stockData }) => {
     }
 
     // 'x'는 Date 객체, 'y'는 price로 설정
-    acc[data.symbol].data.push({ x: new Date(data.date), y: data.price });
+    acc[data.symbol].data.push({ x: new Date(data.created_at), y: data.price }); // created_at을 x로 사용
     return acc;
   }, {});
 
@@ -42,11 +42,7 @@ const StockChart = ({ stockData }) => {
 
   // 차트에 사용할 데이터 구성
   const chartData = {
-    labels: stockData.map(data => {
-      // x축의 날짜는 'Date' 객체여야 하므로 'new Date()'로 변환
-      return new Date(data.date); // Date 객체로 변환
-    }),
-    datasets: datasets,
+    datasets: datasets, // datasets 배열에 주식 데이터가 들어있음
   };
 
   const options = {
@@ -66,7 +62,7 @@ const StockChart = ({ stockData }) => {
         type: 'time',  // 시간 축을 사용
         time: {
           unit: 'day',  // 일 단위로 표시
-          tooltipFormat: 'll',  // 툴팁 형식
+          tooltipFormat: 'MM/dd/yyyy',  // 툴팁 형식 수정
         },
         title: {
           display: true,
