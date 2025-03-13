@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -13,9 +14,10 @@ var db *sql.DB
 
 // StockData 구조체 정의
 type StockData struct {
-	Symbol string `json:"symbol"`
-	Name   string `json:"name"`
-	Price  int    `json:"price"` // 소수점 없이 정수로 저장
+	Symbol    string    `json:"symbol"`
+	Name      string    `json:"name"`
+	Price     int       `json:"price"`
+	CreatedAt time.Time `json:"created_at"`  // time.Time으로 선언
 }
 
 // DB 연결 함수
@@ -54,9 +56,10 @@ func SaveStockData(symbol, name string, price int) error {
 	return nil
 }
 
+// 최근 주식 데이터 가져오기
 func GetRecentStockData() ([]StockData, error) {
 	var stocks []StockData
-	query := "SELECT symbol, name, price FROM stocks ORDER BY id DESC LIMIT 10"
+	query := "SELECT symbol, name, price, created_at FROM stocks ORDER BY id DESC LIMIT 100"
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -65,9 +68,18 @@ func GetRecentStockData() ([]StockData, error) {
 
 	for rows.Next() {
 		var stock StockData
-		if err := rows.Scan(&stock.Symbol, &stock.Name, &stock.Price); err != nil {
+		var createdAtStr string  // created_at을 string으로 먼저 읽음
+		err := rows.Scan(&stock.Symbol, &stock.Name, &stock.Price, &createdAtStr)
+		if err != nil {
 			return nil, err
 		}
+
+		// 문자열을 time.Time으로 변환
+		stock.CreatedAt, err = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("created_at 파싱 실패: %v", err)
+		}
+
 		stocks = append(stocks, stock)
 	}
 	return stocks, nil

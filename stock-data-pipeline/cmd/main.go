@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gmldnjs99/stock-data-pipeline/internal/collector"
 	"github.com/gmldnjs99/stock-data-pipeline/internal/storage"
@@ -16,7 +16,8 @@ func main() {
 
 	// Gin 엔진 생성
 	router := gin.Default()
-
+	router.Use(cors.Default())  // 기본 CORS 설정
+	
 	// 루트 페이지 엔드포인트 추가
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Welcome to Stock Data Pipeline!"})
