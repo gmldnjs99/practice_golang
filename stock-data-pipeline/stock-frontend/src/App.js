@@ -10,6 +10,10 @@ const StockData = () => {
   const [error, setError] = useState(null); // 에러 상태
   const [symbol, setSymbol] = useState(""); // 사용자로부터 입력받은 주식 코드 상태
   const [postError, setPostError] = useState(null); // POST 요청 에러 상태
+  const [newsData, setNewsData] = useState({}); // 주식별 뉴스 데이터 상태 (기본적으로 빈 객체로 초기화)
+  const [newsLoading, setNewsLoading] = useState({}); // 뉴스 로딩 상태 (각 주식별로 관리)
+  const [newsVisible, setNewsVisible] = useState({}); // 각 주식별 뉴스 가시성 상태 관리
+  const [newsExpanded, setNewsExpanded] = useState(false); // 전체 뉴스 섹션 열림 여부 상태
 
   // 페이지 로드 시 백엔드 API에서 주식 데이터를 가져옴
   useEffect(() => {
@@ -52,6 +56,37 @@ const StockData = () => {
         console.error("Failed to post stock data:", error);
         setPostError("Failed to post stock data.");
       });
+  };
+
+  // 뉴스 데이터 가져오기
+  const fetchNews = (stockSymbol) => {
+    setNewsLoading((prev) => ({ ...prev, [stockSymbol]: true })); // 해당 주식의 로딩 상태를 true로 설정
+    fetch(`http://localhost:8080/stock-news`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ symbol: stockSymbol }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setNewsData((prev) => ({ ...prev, [stockSymbol]: data.data })); // 주식별 뉴스 데이터를 업데이트
+        setNewsLoading((prev) => ({ ...prev, [stockSymbol]: false })); // 해당 주식의 로딩 상태를 false로 설정
+      })
+      .catch((error) => {
+        console.error("Failed to fetch news:", error);
+        setNewsLoading((prev) => ({ ...prev, [stockSymbol]: false })); // 로딩 상태 종료
+      });
+  };
+
+  // 뉴스 섹션 열고 닫기
+  const handleNewsToggle = (stockSymbol) => {
+    setNewsVisible((prev) => ({ ...prev, [stockSymbol]: !prev[stockSymbol] }));
+  };
+
+  // 전체 뉴스 섹션 열고 닫기
+  const handleNewsExpandedToggle = () => {
+    setNewsExpanded(!newsExpanded);
   };
 
   if (isLoading) {
@@ -150,6 +185,71 @@ const StockData = () => {
         ) : (
           <Typography variant="body1">저장된 주식 데이터가 없습니다.</Typography>
         )}
+      </div>
+
+      {/* 뉴스 섹션 */}
+      <div style={{ marginTop: '40px' }}>
+        <Typography variant="h6" gutterBottom>
+          주식 관련 뉴스
+        </Typography>
+
+        {/* 뉴스 전체 보기 Accordion */}
+        <Accordion expanded={newsExpanded} onChange={handleNewsExpandedToggle}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls="news-content"
+            id="news-header"
+          >
+            <Typography>전체 뉴스 보기</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Grid container spacing={2}>
+              {savedStocks.map((stock) => (
+                <Grid item xs={12} sm={6} md={4} key={stock.symbol}>
+                  <Paper className="paper" style={{ padding: '20px' }}>
+                    <Typography variant="h6">{stock.name} ({stock.symbol}) 뉴스</Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => {
+                        if (!newsVisible[stock.symbol]) {
+                          fetchNews(stock.symbol);
+                        }
+                        handleNewsToggle(stock.symbol); // 뉴스 보기/숨기기 토글
+                      }}
+                      disabled={newsLoading[stock.symbol]}
+                    >
+                      {newsLoading[stock.symbol] ? '뉴스 로딩 중...' : newsVisible[stock.symbol] ? '뉴스 숨기기' : '뉴스 보기'}
+                    </Button>
+
+                    {/* 뉴스 목록 표시 */}
+                    {newsVisible[stock.symbol] && newsData[stock.symbol] && newsData[stock.symbol].length > 0 && (
+                      <div style={{ marginTop: '20px' }}>
+                        {newsData[stock.symbol].map((news, index) => (
+                          <Accordion key={index}>
+                            <AccordionSummary
+                              expandIcon={<ExpandMoreIcon />}
+                              aria-controls={`news-panel${index}-content`}
+                              id={`news-panel${index}-header`}
+                            >
+                              <Typography>{news.title}</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Typography>
+                                {news.summary} <br />
+                                <a href={news.url} target="_blank" rel="noopener noreferrer">Read more</a>
+                              </Typography>
+                            </AccordionDetails>
+                          </Accordion>
+                        ))}
+                      </div>
+                    )}
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </AccordionDetails>
+        </Accordion>
       </div>
     </Container>
   );
