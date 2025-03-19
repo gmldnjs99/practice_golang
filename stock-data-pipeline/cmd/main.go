@@ -133,6 +133,33 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"data": stocks})
 	})
 
+	// 주식 관련 뉴스 검색 엔드포인트 (POST)
+	router.POST("/stock-news", func(c *gin.Context) {
+		// 요청 본문에서 symbol을 받음
+		var requestBody struct {
+			Symbol string `json:"symbol"` // 주식 심볼
+		}
+
+		// 요청 본문 파싱
+		if err := c.ShouldBindJSON(&requestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		// 주식 심볼을 기반으로 뉴스 데이터 가져오기
+		newsData, err := collector.GetNewsData(requestBody.Symbol)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch news data"})
+			return
+		}
+
+		// 뉴스 데이터 응답
+		c.JSON(http.StatusOK, gin.H{
+			"message": "News data retrieved successfully",
+			"data":    newsData,
+		})
+	})
+	
 	// ========================
 	// 서버 실행
 	// ========================
