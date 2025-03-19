@@ -23,179 +23,170 @@
 |  개별 주식 데이터 저장 |   POST   |      특정 종목 주식 데이터 저장      |         /stock/:symbol        | 요청한 종목코드(symbol)의 주식 가격을 크롤링 후 DB 저장.                           |
 | 저장된 주식 데이터 조회         |   GET   |     저장된 주식 데이터 전체 조회    |      /saved-stocks-info     | DB에 저장된 최근 주식 데이터 전체 조회.                                                             |
 
-## API 목록
-
-### 1. Root Endpoint
-
-- **Method**: `GET`
-- **URL**: `/`
-- **Description**: API의 기본 페이지입니다. 서비스의 간단한 소개를 반환합니다.
-
-#### 예시
-```bash
-curl -X GET http://localhost:8080/
-```
-
-#### Response
-```json
-{
-  "message": "Welcome to Stock Data Pipeline!"
-}
-```
-
 ---
+# API 목록
 
-### 2. Health Check
+## 1. **루트 페이지**
 
-- **Method**: `GET`
-- **URL**: `/health`
-- **Description**: 서버의 상태를 확인하는 엔드포인트입니다. 서버가 정상 동작 중인지 확인할 수 있습니다.
-
-#### 예시
-```bash
-curl -X GET http://localhost:8080/health
-```
-
-#### Response
-```json
-{
-  "status": "ok"
-}
-```
-
----
-
-### 3. 삼성전자 주식 가격 저장
-
-- **Method**: `GET`
-- **URL**: `/samsung-stocks`
-- **Description**: 삼성전자(005930)와 삼성전자 우선주(005935)의 주식 데이터를 네이버에서 가져와 MySQL에 저장합니다.
-
-#### 예시
-```bash
-curl -X GET http://localhost:8080/samsung-stocks
-```
-
-#### Response
-```json
-{
-  "message": "Samsung Stock data saved to DB"
-}
-```
-
----
-
-### 4. Tiger 미국 S&P 주식 가격 저장
-
-- **Method**: `GET`
-- **URL**: `/snp-stocks`
-- **Description**: Tiger 미국 S&P 주식 데이터(360750)를 네이버에서 가져와 MySQL에 저장합니다.
-
-#### 예시
-```bash
-curl -X GET http://localhost:8080/snp-stocks
-```
-
-#### Response
-```json
-{
-  "message": "Tiger 미국 S&P Stock data saved to DB"
-}
-```
-
----
-
-### 5. 특정 주식 데이터 저장
-
-- **Method**: `POST`
-- **URL**: `/stock`
-- **Description**: 특정 주식의 주식 데이터를 네이버에서 가져와 MySQL에 저장합니다. 요청 본문에서 주식의 `symbol`을 전달해야 합니다.
-
-#### Request Body
-```json
-{
-  "symbol": "005930"
-}
-```
-
-#### 예시
-```bash
-curl -X POST http://localhost:8080/stock -H "Content-Type: application/json" -d '{"symbol": "005930"}'
-```
-
-#### Response
-```json
-{
-  "message": "Stock data saved successfully",
-  "data": {
-    "symbol": "005930",
-    "name": "Samsung Electronics",
-    "price": 82500
-  }
-}
-```
-
----
-
-### 6. 최근 저장된 주식 정보 조회
-
-- **Method**: `GET`
-- **URL**: `/saved-stocks-info`
-- **Description**: MySQL에 저장된 최근 주식 데이터 목록을 반환합니다.
-
-#### 예시
-```bash
-curl -X GET http://localhost:8080/saved-stocks-info
-```
-
-#### Response
-```json
-{
-  "data": [
+### **GET** `/`
+- **설명**: API 기본 페이지를 보여주는 엔드포인트입니다.
+- **응답**:
+  - **상태 코드**: 200 OK
+  - **본문**: 
+    ```json
     {
-      "symbol": "005930",
-      "name": "Samsung Electronics",
-      "price": 82500,
-      "timestamp": "2025-03-18T10:00:00Z"
-    },
-    {
-      "symbol": "360750",
-      "name": "Tiger US S&P",
-      "price": 34500,
-      "timestamp": "2025-03-18T10:05:00Z"
+      "message": "Welcome to Stock Data Pipeline!"
     }
-  ]
-}
-```
+    ```
 
 ---
 
-## 에러 처리
+## 2. **헬스 체크**
 
-모든 API는 에러가 발생할 경우 적절한 HTTP 상태 코드와 함께 에러 메시지를 반환합니다.
-
-### 예시
-
-#### 1. 잘못된 주식 심볼을 요청한 경우
-```bash
-curl -X POST http://localhost:8080/stock -H "Content-Type: application/json" -d '{"symbol": "INVALID"}'
-```
-
-#### Response
-```json
-{
-  "error": "Failed to fetch stock data"
-}
-```
+### **GET** `/health`
+- **설명**: 서버 상태를 확인하는 헬스 체크 엔드포인트입니다.
+- **응답**:
+  - **상태 코드**: 200 OK
+  - **본문**: 
+    ```json
+    {
+      "status": "ok"
+    }
+    ```
 
 ---
 
-## 서버 실행
+## 3. **favicon.ico**
 
-서버는 `8080` 포트에서 실행됩니다. 서버를 시작하려면 다음 명령어를 실행하십시오:
+### **GET** `/favicon.ico`
+- **설명**: 이 엔드포인트는 favicon 요청을 무시합니다.
+- **응답**:
+  - **상태 코드**: 204 No Content
 
-```bash
-go run main.go
-```
+---
 
-서버가 정상적으로 실행되면, `http://localhost:8080`에서 API를 사용할 수 있습니다.
+## 4. **주식 데이터 수집 및 저장**
+
+### **POST** `/samsung-stocks`
+- **설명**: 삼성전자(005930)와 삼성전자 우선주(005935)의 주식 데이터를 수집하고 DB에 저장합니다.
+- **응답**:
+  - **상태 코드**: 200 OK
+  - **본문**: 
+    ```json
+    {
+      "message": "Samsung stock data saved to DB"
+    }
+    ```
+
+### **POST** `/snp-stocks`
+- **설명**: TIGER 미국 S&P500 ETF(360750)의 주식 데이터를 수집하고 DB에 저장합니다.
+- **응답**:
+  - **상태 코드**: 200 OK
+  - **본문**: 
+    ```json
+    {
+      "message": "S&P500 ETF stock data saved to DB"
+    }
+    ```
+
+---
+
+## 5. **주식 데이터 수집 및 저장 (symbol 동적 처리)**
+
+### **POST** `/stock`
+- **설명**: 주식 심볼을 제공하면 해당 주식의 데이터를 수집하고 DB에 저장합니다.
+- **요청 본문**:
+  ```json
+  {
+    "symbol": "주식 심볼"
+  }
+  ```
+- **응답**:
+  - **상태 코드**: 200 OK
+  - **본문**: 
+    ```json
+    {
+      "message": "Stock data saved successfully",
+      "data": {
+        "symbol": "주식 심볼",
+        "name": "주식 이름",
+        "price": "주식 가격"
+      }
+    }
+    ```
+
+---
+
+## 6. **최근 저장된 주식 데이터 조회**
+
+### **GET** `/saved-stocks-info`
+- **설명**: DB에 저장된 최근 주식 데이터를 조회합니다.
+- **응답**:
+  - **상태 코드**: 200 OK
+  - **본문**: 
+    ```json
+    {
+      "data": [
+        {
+          "symbol": "주식 심볼",
+          "name": "주식 이름",
+          "price": "주식 가격"
+        },
+        {
+          "symbol": "다른 주식 심볼",
+          "name": "다른 주식 이름",
+          "price": "다른 주식 가격"
+        }
+      ]
+    }
+    ```
+
+---
+
+## 7. **주식 관련 뉴스 검색**
+
+### **POST** `/stock-news`
+- **설명**: 주식 심볼을 기반으로 해당 주식의 뉴스 데이터를 가져옵니다.
+- **요청 본문**:
+  ```json
+  {
+    "symbol": "주식 심볼"
+  }
+  ```
+- **응답**:
+  - **상태 코드**: 200 OK
+  - **본문**: 
+    ```json
+    {
+      "message": "News data retrieved successfully",
+      "data": [
+        {
+          "title": "뉴스 제목",
+          "link": "뉴스 링크",
+          "published_at": "뉴스 발행 시간",
+          "source": "뉴스 출처"
+        },
+        {
+          "title": "다른 뉴스 제목",
+          "link": "다른 뉴스 링크",
+          "published_at": "다른 뉴스 발행 시간",
+          "source": "다른 뉴스 출처"
+        }
+      ]
+    }
+    ```
+
+---
+
+## **공통 오류 응답**
+
+모든 API에서 오류가 발생할 경우, 다음과 같은 형식으로 응답을 반환합니다:
+
+- **상태 코드**: 오류에 해당하는 상태 코드 (예: 400, 500 등)
+- **본문**:
+  ```json
+  {
+    "error": "오류 메시지"
+  }
+  ```
+---
